@@ -48,11 +48,11 @@ async def key_handler(request):
         raise web.HTTPNotFound()
     if status.decode() == 'Done':
         output_list = r.lrange(f'{token}-output', 0, -1)
-        content = '\n\n'.join([i.decode() for i in output_list])
+        content = '\n\n'.join([i.decode('utf-8') for i in output_list])
         return web.Response(body=content, content_type='text/plain')
     else:
         return web.Response(
-            text=f"Your query is being processed...\n{r.get(f'{token}-status')}")
+            text=f"Your query is being processed...\n{r.get(f'{token}-status').decode()}")
 
 
 app = web.Application()

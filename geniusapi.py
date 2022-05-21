@@ -9,29 +9,36 @@ import json
 task_list = []
 
 
-def write_lyrics(lyrics, title, artist, token, r):
-    song_lyrics = [f'{title} - {artist}']
-    for lyric in lyrics:
-        for tag in lyric:
-            if not tag.name or tag.name == 'a':
-                song_lyrics.append(tag.text)
-    r.rpush(f'{token}-output', '\n'.join(song_lyrics))
+def write_lyrics(lyrics, title, artist, token, r, url):
+    if not lyrics:
+        r.rpush(f'{token}-output', f'{artist} - {title}\nNot found!')
+    else:
+        song_lyrics = [f'{artist} - {title}', url]
+        for lyric in lyrics:
+            for tag in lyric:
+                if not tag.name or tag.name == 'a':
+                    if len(tag.text) > 200:
+                        return
+                    song_lyrics.append(tag.text)
+        if len(song_lyrics) > 100:
+            return
+        r.rpush(f'{token}-output', '\n'.join(song_lyrics))
 
 
 async def parse_lyrics(path, title, artist, session, token, r):
     url = f'https://genius.com{path}'
-    async with session.get(url, allow_redirects=True) as response:
+    async with session.get(url) as response:
         data = await response.read()
     soup = bs(data, 'lxml')
     lyrics = soup.find_all('div', {'data-lyrics-container': 'true'})
     if lyrics:
-        write_lyrics(lyrics, title, artist, token, r)
+        write_lyrics(lyrics, title, artist, token, r, url)
         print(f'retrieved lyrics of {path}')
 
 
 async def parse_artist(title, artist, api_key, session, token, r):
     url = f'https://api.genius.com/search?access_token={api_key}&q={artist.replace(" ", "+")}+{title.replace(" ", "+")}'
-    async with session.get(url, allow_redirects=True) as response:
+    async with session.get(url) as response:
         data = await response.read()
     try:
         json_got = json.loads(data)
@@ -41,6 +48,7 @@ async def parse_artist(title, artist, api_key, session, token, r):
         task_list.append(task)
     except Exception as exc:
         print(f'EXCEPTION {artist}-{title} {exc}')
+        write_lyrics(None, title, artist, token, r, None)
 
 
 async def dispatcher(api_key, file, token, r):
@@ -54,13 +62,15 @@ async def dispatcher(api_key, file, token, r):
             if (index + 1) % 15 == 0:
                 await asyncio.sleep(5)
                 r.set(f'{token}-status', f'{index + 1} songs retrieved')
+                break
             title = item[3].text
             artist = item[5].text
             task = asyncio.create_task(parse_artist(title, artist, api_key, session, token, r))
             task_list.append(task)
             # if index > 30:
             #     break
+        await asyncio.sleep(10)
         await asyncio.gather(*task_list)
     r.set(f'{token}-status', 'Done')
-    r.expire(f'{token}-status', 60 * 5)
-    r.expire(f'{token}-output', 60 * 5)
+    r.expire(f'{token}-status', 60 * 30)
+    r.expire(f'{token}-output', 60 * 30)
