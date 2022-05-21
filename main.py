@@ -2,11 +2,14 @@ import asyncio
 
 import aiohttp_jinja2
 import jinja2
+import redis
 from aiohttp import web
 from geniusapi import dispatcher
+import secrets
 import io
 
 routes = web.RouteTableDef()
+r = redis.Redis()
 
 
 @routes.get('/', name='index')
@@ -23,7 +26,7 @@ async def post_handler(request):
     key = await field.read()
     field = await reader.next()
     assert field.name == 'xml'
-    filename = field.filename
+    token = secrets.token_urlsafe(64)
     with io.BytesIO() as f:
         while True:
             chunk = await field.read_chunk()
@@ -31,13 +34,21 @@ async def post_handler(request):
                 break
             f.write(chunk)
         xml_string = f.getvalue().decode()
-        asyncio.create_task(dispatcher(key, xml_string))
-    raise web.HTTPFound(location=request.app.router['result_page'].url_for(key='biba'))
+        r.set(f'{token}-status', 'Reading XML file...')
+        asyncio.create_task(dispatcher(key, xml_string, token, r))
+    raise web.HTTPFound(location=request.app.router['result_page'].url_for(token=token))
 
 
-@routes.get('/{key}', name='result_page')
+@routes.get('/{token}', name='result_page')
 async def key_handler(request):
-    return web.Response(text=f"You got to a results page. Request match info is {request.match_info['key']}")
+    token = request.match_info['token']
+    status = r.get(f'{token}-status')
+    print(status)
+    if status.decode() == 'Done':
+        return web.Response(text=f"Result is here\n{r.lrange(f'{token}-output', 0, -1)}")
+    else:
+        return web.Response(
+            text=f"Your query is being processed...\n{r.get(f'{token}-status')}")
 
 
 app = web.Application()
