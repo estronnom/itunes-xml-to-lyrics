@@ -1,5 +1,4 @@
-import xml.etree.ElementTree
-
+import xml
 import aiohttp
 import asyncio
 from xml.etree import ElementTree
@@ -23,6 +22,7 @@ def write_lyrics(lyrics, title, artist, token, r, url):
         if len(song_lyrics) > 150:
             return
         r.rpush(f'{token}-output', '\n'.join(song_lyrics))
+        print(f'retrieved lyrics of {artist}-{title}')
 
 
 async def parse_lyrics(path, title, artist, session, token, r):
@@ -33,7 +33,8 @@ async def parse_lyrics(path, title, artist, session, token, r):
     lyrics = soup.find_all('div', {'data-lyrics-container': 'true'})
     if lyrics:
         write_lyrics(lyrics, title, artist, token, r, url)
-        print(f'retrieved lyrics of {path}')
+    else:
+        write_lyrics(None, title, artist, token, r, None)
 
 
 async def parse_artist(title, artist, api_key, session, token, r):
@@ -54,8 +55,9 @@ async def parse_artist(title, artist, api_key, session, token, r):
 async def dispatcher(api_key, file, token, r):
     try:
         root = ElementTree.fromstring(file)
-    except xml.etree.ElementTree.ParseError as exc:
-        print(exc)
+    except xml.etree.ElementTree.ParseError:
+        r.set(f'{token}-status', 'Unable to parse file...')
+        r.expire(f'{token}-status', 60 * 30)
         return
     async with aiohttp.ClientSession() as session:
         parse_result = root.findall('./dict/dict/dict')
@@ -65,14 +67,21 @@ async def dispatcher(api_key, file, token, r):
             return
         for index, item in enumerate(parse_result):
             if (index + 1) % 15 == 0:
-                await asyncio.sleep(5)
+                await asyncio.sleep(3.5)
                 r.set(f'{token}-status', f'{index + 1} songs retrieved')
-            title = item[3].text
-            artist = item[5].text
+            try:
+                title = item[3].text
+                artist = item[5].text
+            except IndexError:
+                continue
             task = asyncio.create_task(parse_artist(title, artist, api_key, session, token, r))
             task_list.append(task)
-        await asyncio.sleep(10)
-        await asyncio.gather(*task_list)
-    r.set(f'{token}-status', 'Done')
-    r.expire(f'{token}-status', 60 * 30)
-    r.expire(f'{token}-output', 60 * 30)
+        try:
+            await asyncio.gather(*task_list)
+            await asyncio.sleep(10)
+        except Exception as exc:
+            print(exc)
+        finally:
+            r.set(f'{token}-status', 'Done')
+            r.expire(f'{token}-status', 60 * 30)
+            r.expire(f'{token}-output', 60 * 30)
