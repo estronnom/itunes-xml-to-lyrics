@@ -12,6 +12,14 @@ routes = web.RouteTableDef()
 r = redis.Redis()
 
 
+async def get_status(token):
+    status = r.get(f'{token}-status')
+    if not status:
+        raise web.HTTPNotFound()
+    else:
+        return status.decode()
+
+
 @routes.get('/', name='index')
 @aiohttp_jinja2.template('index.html')
 async def index(request):
@@ -19,7 +27,7 @@ async def index(request):
 
 
 @routes.post('/', name='index_post')
-async def post_handler(request):
+async def index_post(request):
     reader = await request.multipart()
     field = await reader.next()
     assert field.name == 'key'
@@ -41,18 +49,24 @@ async def post_handler(request):
 
 
 @routes.get('/{token}', name='result_page')
-async def key_handler(request):
+@aiohttp_jinja2.template('result.html')
+async def result_page(request):
     token = request.match_info['token']
-    status = r.get(f'{token}-status')
-    if not status:
-        raise web.HTTPNotFound()
-    if status.decode() == 'Done':
-        output_list = r.lrange(f'{token}-output', 0, -1)
-        content = '\n\n'.join([i.decode('utf-8') for i in output_list])
-        return web.Response(body=content, content_type='text/plain')
-    else:
-        return web.Response(
-            text=f"Your query is being processed...\n{r.get(f'{token}-status').decode()}")
+    status = await get_status(token)
+    return {"token": token, "status": status}
+
+
+@routes.post('/{token}/status', name='status_update')
+async def status_update(request):
+    token = request.match_info['token']
+    status = await get_status(token)
+    data = {'status': status}
+    return web.json_response(data)
+
+
+@routes.post('/{token}', name='lyrics_download')
+async def lyrics_download(request):
+    token = request.match_info['token']
 
 
 app = web.Application()
