@@ -67,7 +67,14 @@ async def status_update(request):
 @routes.post('/{token}', name='lyrics_download')
 async def lyrics_download(request):
     token = request.match_info['token']
-    return web.Response(text='biba')
+    headers = {
+        "Content-disposition": "attachment; filename=lyrics.txt"
+    }
+    output_list = r.lrange(f'{token}-output', 0, -1)
+    if not output_list:
+        raise web.HTTPNotFound()
+    body = '\n\n'.join([i.decode() for i in output_list])
+    return web.Response(headers=headers, body=body)
 
 
 app = web.Application()

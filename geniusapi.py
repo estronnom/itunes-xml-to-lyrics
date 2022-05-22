@@ -17,10 +17,10 @@ def write_lyrics(lyrics, title, artist, token, r, url):
         for lyric in lyrics:
             for tag in lyric:
                 if not tag.name or tag.name == 'a':
-                    if len(tag.text) > 200:
+                    if len(tag.text) > 500:
                         return
                     song_lyrics.append(tag.text)
-        if len(song_lyrics) > 100:
+        if len(song_lyrics) > 150:
             return
         r.rpush(f'{token}-output', '\n'.join(song_lyrics))
 
@@ -58,17 +58,19 @@ async def dispatcher(api_key, file, token, r):
         print(exc)
         return
     async with aiohttp.ClientSession() as session:
-        for index, item in enumerate(root.findall('./dict/dict/dict')):
+        parse_result = root.findall('./dict/dict/dict')
+        if not parse_result:
+            r.set(f'{token}-status', 'Unable to parse file...')
+            r.expire(f'{token}-status', 60 * 30)
+            return
+        for index, item in enumerate(parse_result):
             if (index + 1) % 15 == 0:
                 await asyncio.sleep(5)
                 r.set(f'{token}-status', f'{index + 1} songs retrieved')
-                break
             title = item[3].text
             artist = item[5].text
             task = asyncio.create_task(parse_artist(title, artist, api_key, session, token, r))
             task_list.append(task)
-            # if index > 30:
-            #     break
         await asyncio.sleep(10)
         await asyncio.gather(*task_list)
     r.set(f'{token}-status', 'Done')
