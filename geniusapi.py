@@ -8,6 +8,12 @@ import json
 task_list = []
 
 
+async def check_token_validity(api_key, session):
+    url = f'https://api.genius.com/search?access_token={api_key}'
+    async with session.get(url) as response:
+        return response.status == 200
+
+
 def write_lyrics(lyrics, title, artist, token, r, url):
     if not lyrics:
         r.rpush(f'{token}-output', f'{artist} - {title}\nNot found!')
@@ -59,7 +65,12 @@ async def dispatcher(api_key, file, token, r):
         r.set(f'{token}-status', 'Unable to parse file...')
         r.expire(f'{token}-status', 60 * 30)
         return
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(trust_env=True) as session:
+        valid = await check_token_validity(api_key, session)
+        if not valid:
+            r.set(f'{token}-status', 'Invalid Genius API Token')
+            r.expire(f'{token}-status', 60 * 30)
+            return
         parse_result = root.findall('./dict/dict/dict')
         if not parse_result:
             r.set(f'{token}-status', 'Unable to parse file...')
@@ -67,8 +78,9 @@ async def dispatcher(api_key, file, token, r):
             return
         for index, item in enumerate(parse_result):
             if (index + 1) % 15 == 0:
-                await asyncio.sleep(3.5)
+                await asyncio.sleep(2)
                 r.set(f'{token}-status', f'{index + 1} songs retrieved')
+                break
             try:
                 title = item[3].text
                 artist = item[5].text
@@ -79,8 +91,6 @@ async def dispatcher(api_key, file, token, r):
         try:
             await asyncio.gather(*task_list)
             await asyncio.sleep(10)
-        except Exception as exc:
-            print(exc)
         finally:
             r.set(f'{token}-status', 'Done')
             r.expire(f'{token}-status', 60 * 30)
