@@ -10,21 +10,29 @@ Current status is:
 <div id="status">{{ status }}</div>
 
 <script type="text/javascript">
-    const refreshIntervalId = setInterval(updateStatus, 3000);
-
     function updateStatus() {
-        if (document.getElementById("status").innerHTML === 'Done') {
-            clearInterval(refreshIntervalId)
-        }
         fetch("{{ url('status_update', token=token) }}", {method: 'POST'})
             .then((response) => {
                 return response.json();
             })
             .then((data) => {
                 document.getElementById("status").innerHTML = data.status;
+                if (data.status === 'Done') {
+                    const downloadForm = document.createElement("form");
+                    downloadForm.setAttribute('action', '')
+                    downloadForm.setAttribute('method', 'post')
+                    const downloadButton = document.createElement("input");
+                    downloadButton.setAttribute('type', 'Submit')
+                    downloadButton.setAttribute('value', 'Download')
+                    downloadForm.appendChild(downloadButton)
+                    const statusDiv = document.getElementById("status")
+                    statusDiv.appendChild(downloadForm)
+                    clearInterval(refreshIntervalId)
+                }
             });
     }
 
+    const refreshIntervalId = setInterval(updateStatus, 3000);
 </script>
 </body>
 </html>
