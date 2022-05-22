@@ -67,6 +67,7 @@ async def status_update(request):
 @routes.post('/{token}', name='lyrics_download')
 async def lyrics_download(request):
     token = request.match_info['token']
+    return web.Response(text='biba')
 
 
 app = web.Application()

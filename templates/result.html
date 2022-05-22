@@ -7,24 +7,24 @@
 <body>
 <h3>{{ token }} query: </h3>
 Current status is:
-<div id="status"></div>
+<div id="status">{{ status }}</div>
 
 <script type="text/javascript">
-    $.postJSON = function (url, data, func) {
-        $.post(url + (url.indexOf("?") == -1 ? "?" : "&") + "callback=?", data, func, "json");
-    }
+    const refreshIntervalId = setInterval(updateStatus, 3000);
 
     function updateStatus() {
-        $.postJSON("{{ url('result_page', token=token) }}", function (rowz) {
-            console.log('posting')
-            $('#status').empty().append('<p>' + rowz.status);
-            setTimeout('updateStatus()', 3000);
-        });
+        if (document.getElementById("status").innerHTML === 'Done') {
+            clearInterval(refreshIntervalId)
+        }
+        fetch("{{ url('status_update', token=token) }}", {method: 'POST'})
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                document.getElementById("status").innerHTML = data.status;
+            });
     }
 
-    $(document).ready(function () {
-        $.ajaxSetup({cache: false});
-    });
 </script>
 </body>
 </html>
