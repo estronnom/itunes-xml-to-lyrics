@@ -80,4 +80,6 @@ async def lyrics_download(request):
 app = web.Application()
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
 app.add_routes(routes)
-web.run_app(app)
+
+if __name__ == '__main__':
+    web.run_app(app, port=8080)

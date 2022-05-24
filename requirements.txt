@@ -1,5 +1,6 @@
 aiohttp==3.8.1
-aiohttp_jinja2==1.5
-beautifulsoup4==4.11.1
-Jinja2==2.10.1
-redis==4.3.1
+aiohttp_jinja2
+jinja2
+aiohttp-devtools
+beautifulsoup4
+redis
