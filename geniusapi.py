@@ -80,7 +80,6 @@ async def dispatcher(api_key, file, token, r):
             if (index + 1) % 15 == 0:
                 await asyncio.sleep(2)
                 r.set(f'{token}-status', f'{index + 1} songs retrieved')
-                break
             try:
                 title = item[3].text
                 artist = item[5].text
