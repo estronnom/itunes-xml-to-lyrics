@@ -1,0 +1,77 @@
+body {
+  background-color: #d1d1d1;
+  display: grid;
+  place-items: center;
+  font-family: monospace;
+  font-size: 14px;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.box {
+  box-sizing: content-box;
+  border: 3px solid;
+  padding: 2%;
+  margin: 15%;
+  box-shadow: 0 1px 2px;
+  text-align: center;
+  width: 370px;
+  height: 270px;
+}
+
+.words {
+  color: white;
+  background-color: black;
+  margin: 1%;
+  padding: 3%;
+
+  overflow: hidden;
+}
+
+span {
+  display: block;
+  height: 100%;
+  text-align: center;
+  animation: spin_words 15s infinite;
+}
+
+@keyframes spin_words{
+  0%{
+    transform: translateX(-100%);
+  }
+  10%{
+    transform: translateX(-64%);
+  }
+  20%{
+    transform: translateX(-28%);
+  }
+  30%{
+    transform: translateX(0%);
+  }
+  40%{
+    transform: translateX(28%);
+  }
+  50%{
+    transform: translateX(64%);
+  }
+  60%{
+    transform: translateX(100%);
+  }
+  70%{
+    transform: translateX(50%);
+  }
+  80%{
+    transform: translateX(0%);
+  }
+  90%{
+    transform: translateX(-50%);
+  }
+  100%{
+    transform: translateX(-100%);
+  }
+}
+
+input {
+  font-family : inherit;
+}

@@ -62,7 +62,7 @@ async def dispatcher(api_key, file, token, r):
     try:
         root = ElementTree.fromstring(file)
     except xml.etree.ElementTree.ParseError:
-        r.set(f'{token}-status', 'Unable to parse file...')
+        r.set(f'{token}-status', 'Unable to parse file')
         r.expire(f'{token}-status', 60 * 30)
         return
     async with aiohttp.ClientSession(trust_env=True) as session:
@@ -73,7 +73,7 @@ async def dispatcher(api_key, file, token, r):
             return
         parse_result = root.findall('./dict/dict/dict')
         if not parse_result:
-            r.set(f'{token}-status', 'Unable to parse file...')
+            r.set(f'{token}-status', 'Unable to parse file')
             r.expire(f'{token}-status', 60 * 30)
             return
         for index, item in enumerate(parse_result):
@@ -89,7 +89,7 @@ async def dispatcher(api_key, file, token, r):
             task_list.append(task)
         try:
             await asyncio.gather(*task_list)
-            await asyncio.sleep(10)
+            await asyncio.sleep(5)
         finally:
             r.set(f'{token}-status', 'Done')
             r.expire(f'{token}-status', 60 * 30)

@@ -2,12 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ token }}</title>
+    <title>Lyrics Parser</title>
+    <link rel="stylesheet" href="templates/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-<h3>{{ token }} query: </h3>
-Current status is:
-<div id="status">{{ status }}</div>
+
+<div class="box" style="vertical-align: center">
+    <div class="words" style="transform: none">
+        <span>{{ token }} query: </span>
+    </div>
+    <p><p>
+        Download link and this page will be available for 30 minutes after the parsing process is done.
+    <div id="status" style="font-weight: bold">
+        {{ status }}
+    </div>
+</div>
+
+<footer>
+    <a href="https://github.com/estronnom/itunes-xml-to-lyrics" style="color: black"><i style="font-size:24px" class="fa">&#xf09b;</i></a>
+</footer>
 
 <script type="text/javascript">
     function updateStatus() {
@@ -28,10 +42,13 @@ Current status is:
                     const statusDiv = document.getElementById("status")
                     statusDiv.appendChild(downloadForm)
                     clearInterval(refreshIntervalId)
+                } else if (data.status === "Unable to parse file" || data.status === "Invalid Genius API Token") {
+                    clearInterval(refreshIntervalId)
                 }
             });
     }
 
+    updateStatus()
     const refreshIntervalId = setInterval(updateStatus, 3000);
 </script>
 </body>

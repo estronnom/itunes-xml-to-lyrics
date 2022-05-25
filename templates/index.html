@@ -2,18 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Itunes XML Lyrics Parser</title>
+    <title>Lyrics Parser</title>
+    <link rel="stylesheet" href="templates/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
+<div class="box">
+    <div class="words">
+        <span>ITunes XML Lyrics parser</span>
+    </div>
+<div>
+    <p>1. <a href="https://docs.genius.com/#/getting-started-h1">Get a Genius API Key</a>
+    <p>2. Export your ITunes/Music library via <br> File > Library > Export Library to an XML file
+    <p>3. Fill the form and wait for the results
+</div>
 <form action="/" method="post" accept-charset="utf-8"
       enctype="multipart/form-data">
     <label for="key">Genius API key:</label>
-    <input id="key" name="key" type="text" value=""/>
+    <input id="key" name="key" type="text" value="" required/>
     <p></p>
     <label for="xml">XML:</label>
-    <input id="xml" name="xml" type="file" value=""/>
+    <input id="xml" name="xml" type="file" required/>
     <p></p>
-    <input type="submit" value="Send" autofocus/>
+    <input type="submit" value="Parse!" autofocus/>
 </form>
+</div>
+<footer>
+    <a href="https://github.com/estronnom/itunes-xml-to-lyrics" style="color: black"><i style="font-size:24px" class="fa">&#xf09b;</i></a>
+</footer>
 </body>
 </html>

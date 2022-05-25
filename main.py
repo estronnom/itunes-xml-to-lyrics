@@ -68,7 +68,7 @@ async def status_update(request):
 async def lyrics_download(request):
     token = request.match_info['token']
     headers = {
-        "Content-disposition": "attachment; filename=lyrics.txt"
+        "Content-disposition": f"attachment; filename={token}-lyrics.txt"
     }
     output_list = r.lrange(f'{token}-output', 0, -1)
     if not output_list:
@@ -79,6 +79,7 @@ async def lyrics_download(request):
 
 app = web.Application()
 aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
+routes.static('/templates', 'templates/')
 app.add_routes(routes)
 
 if __name__ == '__main__':
