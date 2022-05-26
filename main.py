@@ -82,4 +82,4 @@ if __name__ == '__main__':
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
     # routes.static('/templates', 'templates/')
     app.add_routes(routes)
-    web.run_app(app, path=args.path)
+    web.run_app(app)
