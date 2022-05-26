@@ -47,7 +47,8 @@ async def index_post(request):
         xml_string = f.getvalue().decode()
         r.set(f'{token}-status', 'Reading XML file...')
         asyncio.create_task(dispatcher(api_key, xml_string, token, r))
-    raise web.HTTPFound(location=request.app.router['result_page'].url_for(token=token))
+    raise web.HTTPFound(
+        location=request.app.router['result_page'].url_for(token=token))
 
 
 @routes.get('/{token}', name='result_page')

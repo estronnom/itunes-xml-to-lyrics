@@ -7,7 +7,9 @@ from bs4 import BeautifulSoup as bs
 import json
 
 task_list = []
-logging.basicConfig(filename='lyricsapp.log', encoding='utf-8', level=logging.INFO,
+logging.basicConfig(filename='lyricsapp.log',
+                    encoding='utf-8',
+                    level=logging.INFO,
                     format='%(levelname)s:%(asctime)s:%(message)s')
 
 
@@ -48,19 +50,26 @@ async def parse_lyrics(path, title, artist, session, token, r):
 
 
 async def parse_artist(title, artist, api_key, session, token, r):
-    url = f'https://api.genius.com/search?access_token={api_key}&q={artist.replace(" ", "+")}+{title.replace(" ", "+")}'
+    url = f'https://api.genius.com/search?access_token={api_key}' \
+          f'&q={artist.replace(" ", "+")}+{title.replace(" ", "+")}'
     async with session.get(url) as response:
         data = await response.read()
     try:
         json_got = json.loads(data)
         path = json_got['response']['hits'][0]['result']['path']
         path_words = [i.lower() for i in path.split('-')]
-        if title.lower() not in path_words and artist.lower() not in path_words:
-            raise IndexError
+        if title.lower() not in path_words and\
+                artist.lower() not in path_words:
+            raise KeyError
         logging.info(f'{token}:{artist}:{title}:id retrieved')
-        task = asyncio.create_task(parse_lyrics(path, title, artist, session, token, r))
+        task = asyncio.create_task(parse_lyrics(path,
+                                                title,
+                                                artist,
+                                                session,
+                                                token,
+                                                r))
         task_list.append(task)
-    except Exception as exc:
+    except KeyError:
         logging.info(f'{token}:{artist}:{title}:lyrics not found')
         write_lyrics(None, title, artist, token, r, None)
 
@@ -92,7 +101,12 @@ async def dispatcher(api_key, file, token, r):
                 artist = item[5].text
             except IndexError:
                 continue
-            task = asyncio.create_task(parse_artist(title, artist, api_key, session, token, r))
+            task = asyncio.create_task(parse_artist(title,
+                                                    artist,
+                                                    api_key,
+                                                    session,
+                                                    token,
+                                                    r))
             task_list.append(task)
         try:
             await asyncio.gather(*task_list)
