@@ -1,11 +1,14 @@
 import xml
 import aiohttp
 import asyncio
+import logging
 from xml.etree import ElementTree
 from bs4 import BeautifulSoup as bs
 import json
 
 task_list = []
+logging.basicConfig(filename='lyricsapp.log', encoding='utf-8', level=logging.INFO,
+                    format='%(levelname)s:%(asctime)s:%(message)s')
 
 
 async def check_token_validity(api_key, session):
@@ -22,13 +25,13 @@ def write_lyrics(lyrics, title, artist, token, r, url):
         for lyric in lyrics:
             for tag in lyric:
                 if not tag.name or tag.name == 'a':
-                    if len(tag.text) > 500:
+                    if len(tag.text) > 1000:
                         return
                     song_lyrics.append(tag.text)
         if len(song_lyrics) > 150:
             return
         r.rpush(f'{token}-output', '\n'.join(song_lyrics))
-        print(f'retrieved lyrics of {artist}-{title}')
+        logging.info(f'{token}:{artist}:{title}:lyrics retrieved')
 
 
 async def parse_lyrics(path, title, artist, session, token, r):
@@ -40,6 +43,7 @@ async def parse_lyrics(path, title, artist, session, token, r):
     if lyrics:
         write_lyrics(lyrics, title, artist, token, r, url)
     else:
+        logging.info(f'{token}:{artist}:{title}:lyrics not found')
         write_lyrics(None, title, artist, token, r, None)
 
 
@@ -50,11 +54,14 @@ async def parse_artist(title, artist, api_key, session, token, r):
     try:
         json_got = json.loads(data)
         path = json_got['response']['hits'][0]['result']['path']
-        print(f'retrieved id of {artist}-{title}')
+        path_words = [i.lower() for i in path.split('-')]
+        if title.lower() not in path_words and artist.lower() not in path_words:
+            raise IndexError
+        logging.info(f'{token}:{artist}:{title}:id retrieved')
         task = asyncio.create_task(parse_lyrics(path, title, artist, session, token, r))
         task_list.append(task)
     except Exception as exc:
-        print(f'EXCEPTION {artist}-{title} {exc}')
+        logging.info(f'{token}:{artist}:{title}:lyrics not found')
         write_lyrics(None, title, artist, token, r, None)
 
 

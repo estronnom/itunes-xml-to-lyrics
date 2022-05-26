@@ -1,15 +1,17 @@
 import asyncio
-
 import aiohttp_jinja2
 import jinja2
 import redis
 from aiohttp import web
 from geniusapi import dispatcher
 import secrets
+import argparse
 import io
 
 routes = web.RouteTableDef()
 r = redis.Redis()
+parser = argparse.ArgumentParser()
+parser.add_argument('--port')
 
 
 async def get_status(token):
@@ -80,6 +82,7 @@ async def lyrics_download(request):
 if __name__ == '__main__':
     app = web.Application()
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
-    # routes.static('/templates', 'templates/')
+    routes.static('/templates', 'templates/')
+    args = parser.parse_args()
     app.add_routes(routes)
-    web.run_app(app)
+    web.run_app(app, port=args.port)
