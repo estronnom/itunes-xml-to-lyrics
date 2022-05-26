@@ -1,7 +1,7 @@
 # ITunes XML Lyrics Parser
 
 This web app allows you to simply parse lyrics for your whole Itunes library from genius.com.
-App is running locally flawless using docker-compose. App is based on aiohttp library, which guarantees high performance.
+App is running flawless using docker-compose. App is based on aiohttp library, which guarantees high performance.
 
 # Running web app
 Clone repository
@@ -14,6 +14,9 @@ Proceed to new directory
 
 Run docker-compose
 
-`docker-compose up`
+`docker-compose up -d`
 
-Visit [localhost:8080](localhost:8080) and follow further instructions
+Visit [localhost:8080](localhost:8080) and follow further page instructions
+
+Sometimes docker run web app on docker-machine ip, so it may be useful to evaluate
+`docker-machine ip`
