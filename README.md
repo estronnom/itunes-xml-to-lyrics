@@ -18,5 +18,5 @@ Run docker-compose
 
 Visit [localhost:8080](localhost:8080) and follow further page instructions
 
-Sometimes docker run web app on docker-machine ip, so it may be useful to evaluate
+Sometimes docker runs web apps on docker-machine ip, so it may be useful to evaluate
 `docker-machine ip`
